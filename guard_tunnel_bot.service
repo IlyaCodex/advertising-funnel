@@ -1,0 +1,14 @@
+[Unit]
+Description=Guard Tunnel Proxy Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/guard_tunnel_bot
+ExecStart=/root/guard_tunnel_bot/venv/bin/python bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
