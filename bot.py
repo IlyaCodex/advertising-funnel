@@ -8,7 +8,6 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# ─── Загрузка переменных окружения ────────────────────────────────────────────
 load_dotenv()
 
 BOT_TOKEN     = os.getenv("BOT_TOKEN")
@@ -22,30 +21,28 @@ bot = Bot(token=BOT_TOKEN)
 dp  = Dispatcher()
 
 
-# ─── Клавиатуры ──────────────────────────────────────────────────────────────
 def kb_main() -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(
-            text="🚀 Активировать бесплатный период",
-            url=MAIN_BOT_LINK
-        )
+    btn = InlineKeyboardButton(
+        text="🚀 Активировать бесплатный период",
+        url=MAIN_BOT_LINK
     )
+    btn.model_extra["style"] = "success"
+    builder = InlineKeyboardBuilder()
+    builder.row(btn)
     return builder.as_markup()
 
 
 def kb_features() -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(
-            text="🚀 Попробовать бесплатно",
-            url=MAIN_BOT_LINK
-        )
+    btn = InlineKeyboardButton(
+        text="🚀 Попробовать бесплатно",
+        url=MAIN_BOT_LINK
     )
+    btn.model_extra["style"] = "success"
+    builder = InlineKeyboardBuilder()
+    builder.row(btn)
     return builder.as_markup()
 
 
-# ─── Команды меню ─────────────────────────────────────────────────────────────
 async def set_commands():
     await bot.set_my_commands([
         BotCommand(command="start",    description="🏠 На главную"),
@@ -53,7 +50,6 @@ async def set_commands():
     ])
 
 
-# ─── Хендлеры ─────────────────────────────────────────────────────────────────
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message):
     text = (
@@ -100,7 +96,6 @@ async def any_message(message: types.Message):
     )
 
 
-# ─── Запуск ───────────────────────────────────────────────────────────────────
 async def main():
     await set_commands()
     await dp.start_polling(bot)

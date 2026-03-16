@@ -1,12 +1,13 @@
 [Unit]
-Description=Guard Tunnel Proxy Bot
+Description=Guard Tunnel Telegram Bot
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/guard_tunnel_bot
-ExecStart=/root/guard_tunnel_bot/venv/bin/python bot.py
+WorkingDirectory=/opt/guard-tunnel-bot
+EnvironmentFile=/opt/guard-tunnel-bot/.env
+ExecStart=/opt/guard-tunnel-bot/venv/bin/python bot.py
 Restart=always
 RestartSec=5
 
