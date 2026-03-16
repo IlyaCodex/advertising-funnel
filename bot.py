@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import asyncio
 import logging
 import os
-
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command, CommandStart
@@ -9,12 +9,11 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 load_dotenv()
-
 BOT_TOKEN     = os.getenv("BOT_TOKEN")
 MAIN_BOT_LINK = os.getenv("MAIN_BOT_LINK", "https://t.me/GuardTunnel_bot")
 
 if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN не задан! Создай файл .env")
+    raise RuntimeError("BOT_TOKEN ne zadan! Sozdaj .env fajl")
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
@@ -46,7 +45,7 @@ def kb_features() -> InlineKeyboardMarkup:
 async def set_commands():
     await bot.set_my_commands([
         BotCommand(command="start",    description="🏠 На главную"),
-        BotCommand(command="features", description="⭐️ Преимущества"),
+        BotCommand(command="features", description="⭐ Преимущества"),
     ])
 
 
@@ -54,8 +53,7 @@ async def set_commands():
 async def cmd_start(message: types.Message):
     text = (
         "🛡 <b>Guard Tunnel VPN</b>\n\n"
-        "Надёжная защита данных и стабильное соединение "
-        "в любой точке мира.\n\n"
+        "Надёжная защита данных и стабильное соединение в любой точке мира.\n\n"
         "✅ До 10 Gbit/с\n"
         "✅ Шифрование трафика\n"
         "✅ Серверы в 10+ странах\n"
@@ -71,11 +69,11 @@ async def cmd_start(message: types.Message):
 @dp.message(Command("features"))
 async def cmd_features(message: types.Message):
     text = (
-        "⭐️ <b>Почему Guard Tunnel VPN?</b>\n\n"
-        "⚡️ <b>Скорость до 10 Gbit/с</b>\n"
+        "⭐ <b>Почему Guard Tunnel VPN?</b>\n\n"
+        "⚡ <b>Скорость до 10 Gbit/с</b>\n"
         "Никаких буферизаций и задержек — стриминг, игры, звонки без лагов.\n\n"
         "🔒 <b>Шифрование трафика</b>\n"
-        "Твои данные защищены по протоколу VLESS — никто не видит что ты делаешь в сети.\n\n"
+        "Твои данные защищены по протоколу VLESS.\n\n"
         "🌍 <b>Серверы в 10+ странах</b>\n"
         "Выбирай локацию — Европа, Азия, Америка.\n\n"
         "📱 <b>Все устройства</b>\n"
@@ -99,7 +97,6 @@ async def any_message(message: types.Message):
 async def main():
     await set_commands()
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
