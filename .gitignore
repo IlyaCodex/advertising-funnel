@@ -1,2 +1,5 @@
 .env
-guard_tunnel_bot.service
+__pycache__/
+*.pyc
+venv/
+data/
