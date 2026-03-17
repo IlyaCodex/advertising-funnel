@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
+import os
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command, CommandStart
-from aiogram.types import InlineKeyboardButton, BotCommand, CallbackQuery
+from aiogram.types import InlineKeyboardButton, BotCommand, CallbackQuery, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import BOT_TOKEN, MAIN_BOT_LINK, SUPPORT_USERNAME, ADMIN_IDS, TARIFFS
@@ -20,6 +21,9 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# Путь к скриншоту инструкции
+INSTRUCTION_PHOTO = os.path.join(os.path.dirname(__file__), "instruction.png")
+
 # Демо ключи для выдачи
 DEMO_KEYS = [
     "vless://a7c01c26-1634-4b83-aacf-d54d1bec7c8a@194.124.211.206:443?security=reality&encryption=none&flow=xtls-rprx-vision&type=tcp&sni=telegram.org&pbk=OrSSDhr53zEISMa39-0gXDPvRWlDjfSlh44m7YAgGis&sid=9f1042d7#Нидерланды (Дронтен) | TCP",
@@ -34,12 +38,20 @@ DEMO_KEYS = [
 def kb_start() -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    btn_trial = InlineKeyboardButton(
+    builder.row(InlineKeyboardButton(
         text="🆓 Протестировать бесплатно 🆓",
         callback_data="trial"
-    )
-    btn_trial.model_extra["style"] = "success"
-    builder.row(btn_trial)
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="💳 Тарифы и оплата",
+        callback_data="tariffs"
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="📖 Инструкция",
+        callback_data="instructions"
+    ))
 
     builder.row(InlineKeyboardButton(
         text="👥 Рекомендовать друзьям",
@@ -67,12 +79,10 @@ def kb_after_trial() -> types.InlineKeyboardMarkup:
         callback_data="tariffs"
     ))
 
-    btn_connect = InlineKeyboardButton(
-        text="🔐 Подключить VLESS",
-        callback_data="connect_vless"
-    )
-    btn_connect.model_extra["style"] = "success"
-    builder.row(btn_connect)
+    builder.row(InlineKeyboardButton(
+        text="📖 Инструкция",
+        callback_data="instructions"
+    ))
 
     builder.row(InlineKeyboardButton(
         text="🔑 Мои ключи",
@@ -115,6 +125,32 @@ def kb_back() -> types.InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def kb_instructions() -> types.InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+
+    builder.row(InlineKeyboardButton(
+        text="📥 Скачать v2RayTun (Android)",
+        url="https://play.google.com/store/apps/details?id=com.v2ray.client"
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="📥 Скачать v2RayTun (iOS)",
+        url="https://apps.apple.com/us/app/v2raytun/id6476628951"
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="🔑 Мои ключи",
+        callback_data="my_keys"
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="◀️ Назад",
+        callback_data="back_main"
+    ))
+
+    return builder.as_markup()
+
+
 def kb_admin() -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
@@ -134,12 +170,10 @@ def kb_admin() -> types.InlineKeyboardMarkup:
 
 def kb_redirect() -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    btn = InlineKeyboardButton(
+    builder.row(InlineKeyboardButton(
         text="🚀 Активировать бесплатный период",
         url=MAIN_BOT_LINK
-    )
-    btn.model_extra["style"] = "success"
-    builder.row(btn)
+    ))
     return builder.as_markup()
 
 
@@ -281,12 +315,41 @@ async def cb_trial(callback: CallbackQuery):
         "🔑 <b>Ваши ключи:</b>\n\n"
         f"{keys_text}\n\n"
         "👆 Нажмите на ключ чтобы скопировать, затем вставьте в приложение.\n\n"
-        "📲 <b>Инструкция:</b>\n"
-        "1. Скачайте V2rayNG (Android) или Streisand (iOS)\n"
-        "2. Нажмите + и вставьте ключ\n"
-        "3. Подключитесь!"
+        "📲 Нажмите <b>📖 Инструкция</b> чтобы узнать как подключиться."
     )
     await callback.message.answer(text, parse_mode="HTML", reply_markup=kb_after_trial())
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "instructions")
+async def cb_instructions(callback: CallbackQuery):
+    text = (
+        "📖 <b>Инструкция по подключению</b>\n\n"
+        "1️⃣ Скачай приложение <b>v2RayTun</b> для своего устройства 👇\n\n"
+        "2️⃣ Скопируй ключи из раздела <b>«🔑 Мои ключи»</b>\n\n"
+        "3️⃣ Открой приложение <b>v2RayTun</b>, нажми на <b>+</b> "
+        "в правом верхнем углу\n\n"
+        '4️⃣ Выбери <b>«Импорт из буфера обмена»</b>\n\n'
+        "5️⃣ Нажми кнопку подключения ▶️\n\n"
+        "✅ Готово! VPN работает."
+    )
+
+    # Отправляем фото если файл существует
+    if os.path.exists(INSTRUCTION_PHOTO):
+        photo = FSInputFile(INSTRUCTION_PHOTO)
+        await callback.message.answer_photo(
+            photo=photo,
+            caption=text,
+            parse_mode="HTML",
+            reply_markup=kb_instructions()
+        )
+    else:
+        await callback.message.answer(
+            text,
+            parse_mode="HTML",
+            reply_markup=kb_instructions()
+        )
+
     await callback.answer()
 
 
@@ -306,14 +369,21 @@ async def cb_my_keys(callback: CallbackQuery):
     text = (
         "🔑 <b>Ваши ключи:</b>\n\n"
         f"{keys_text}\n\n"
-        "📋 Скопируйте ключ и добавьте в клиент-приложение:\n\n"
-        "📲 <b>Приложения:</b>\n"
-        "• Android: <b>V2rayNG</b>\n"
-        "• iOS: <b>Streisand</b>\n"
-        "• Windows: <b>V2rayN</b>\n"
-        "• macOS: <b>V2rayU</b>"
+        "👆 Нажмите на ключ чтобы скопировать.\n\n"
+        "📲 Не знаете как подключить? Нажмите <b>📖 Инструкция</b>"
     )
-    await callback.message.answer(text, parse_mode="HTML", reply_markup=kb_back())
+
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(
+        text="📖 Инструкция",
+        callback_data="instructions"
+    ))
+    builder.row(InlineKeyboardButton(
+        text="◀️ Назад",
+        callback_data="back_main"
+    ))
+
+    await callback.message.answer(text, parse_mode="HTML", reply_markup=builder.as_markup())
     await callback.answer()
 
 
