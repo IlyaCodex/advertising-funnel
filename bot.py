@@ -20,6 +20,12 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# Демо ключи для выдачи
+DEMO_KEYS = [
+    "vless://demo-key-1@server1.guardtunnel.com:443?encryption=none&security=tls&type=ws&host=server1.guardtunnel.com&path=/ws#GuardTunnel-DE",
+    "vless://demo-key-2@server2.guardtunnel.com:443?encryption=none&security=tls&type=ws&host=server2.guardtunnel.com&path=/ws#GuardTunnel-NL",
+]
+
 
 # ============================================================
 # KEYBOARDS
@@ -38,6 +44,11 @@ def kb_start() -> types.InlineKeyboardMarkup:
     builder.row(InlineKeyboardButton(
         text="👥 Рекомендовать друзьям",
         callback_data="referral"
+    ))
+
+    builder.row(InlineKeyboardButton(
+        text="🔑 Мои ключи",
+        callback_data="my_keys"
     ))
 
     builder.row(InlineKeyboardButton(
@@ -62,6 +73,11 @@ def kb_after_trial() -> types.InlineKeyboardMarkup:
     )
     btn_connect.model_extra["style"] = "success"
     builder.row(btn_connect)
+
+    builder.row(InlineKeyboardButton(
+        text="🔑 Мои ключи",
+        callback_data="my_keys"
+    ))
 
     builder.row(InlineKeyboardButton(
         text="👥 Рекомендовать друзьям",
@@ -119,7 +135,7 @@ def kb_admin() -> types.InlineKeyboardMarkup:
 def kb_redirect() -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     btn = InlineKeyboardButton(
-        text="🚀 Перейти в Guard Tunnel VPN",
+        text="🚀 Активировать бесплатный период",
         url=MAIN_BOT_LINK
     )
     btn.model_extra["style"] = "success"
@@ -150,13 +166,21 @@ async def cmd_start(message: types.Message):
 
     await add_user(user.id, user.username or "", user.first_name or "", ref_id)
 
+    # Проверяем режим редиректа
     mode = await get_setting("redirect_mode")
     if mode == "1":
         text = (
             "🛡 <b>Guard Tunnel VPN</b>\n\n"
             "Надёжная защита данных и стабильное соединение "
             "в любой точке мира.\n\n"
-            "👇 Нажми кнопку чтобы перейти:"
+            "✅ До 10 Gbit/с\n"
+            "✅ Шифрование трафика\n"
+            "✅ Серверы в 10+ странах\n"
+            "✅ Работает на всех устройствах\n"
+            "✅ Поддержка 24/7\n\n"
+            "🎁 <b>Пробный период — бесплатно.</b>\n"
+            "Без привязки карты. Активация за 2 минуты.\n\n"
+            "👇 Нажми кнопку и получи доступ прямо сейчас"
         )
         await message.answer(text, parse_mode="HTML", reply_markup=kb_redirect())
         return
@@ -183,7 +207,19 @@ async def cmd_start(message: types.Message):
 async def cmd_features(message: types.Message):
     mode = await get_setting("redirect_mode")
     if mode == "1":
-        text = "🛡 <b>Guard Tunnel VPN</b>\n\n👇 Нажми кнопку чтобы перейти:"
+        text = (
+            "🛡 <b>Guard Tunnel VPN</b>\n\n"
+            "Надёжная защита данных и стабильное соединение "
+            "в любой точке мира.\n\n"
+            "✅ До 10 Gbit/с\n"
+            "✅ Шифрование трафика\n"
+            "✅ Серверы в 10+ странах\n"
+            "✅ Работает на всех устройствах\n"
+            "✅ Поддержка 24/7\n\n"
+            "🎁 <b>Пробный период — бесплатно.</b>\n"
+            "Без привязки карты. Активация за 2 минуты.\n\n"
+            "👇 Нажми кнопку и получи доступ прямо сейчас"
+        )
         await message.answer(text, parse_mode="HTML", reply_markup=kb_redirect())
         return
 
@@ -234,13 +270,12 @@ async def cb_trial(callback: CallbackQuery):
 
     await activate_trial(user_id)
 
+    keys_text = "\n\n".join([f"<code>{k}</code>" for k in DEMO_KEYS])
     text = (
         "✅ <b>Тестовый период активирован!</b>\n\n"
         "🗓 Срок: <b>3 дня</b>\n\n"
-        "🔑 <b>Ваш ключ:</b>\n\n"
-        "<code>vless://demo@server.guardtunnel.com:443"
-        "?encryption=none&security=tls&type=ws"
-        "&path=/ws#GuardTunnel-Demo</code>\n\n"
+        "🔑 <b>Ваши ключи:</b>\n\n"
+        f"{keys_text}\n\n"
         "👆 Нажмите на ключ чтобы скопировать, затем вставьте в приложение.\n\n"
         "📲 <b>Инструкция:</b>\n"
         "1. Скачайте V2rayNG (Android) или Streisand (iOS)\n"
@@ -248,6 +283,33 @@ async def cb_trial(callback: CallbackQuery):
         "3. Подключитесь!"
     )
     await callback.message.answer(text, parse_mode="HTML", reply_markup=kb_after_trial())
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "my_keys")
+async def cb_my_keys(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    already = await is_trial_activated(user_id)
+
+    if not already:
+        await callback.answer(
+            "❌ У вас нет активных ключей. Сначала активируйте тестовый период!",
+            show_alert=True
+        )
+        return
+
+    keys_text = "\n\n".join([f"<code>{k}</code>" for k in DEMO_KEYS])
+    text = (
+        "🔑 <b>Ваши ключи:</b>\n\n"
+        f"{keys_text}\n\n"
+        "📋 Скопируйте ключ и добавьте в клиент-приложение:\n\n"
+        "📲 <b>Приложения:</b>\n"
+        "• Android: <b>V2rayNG</b>\n"
+        "• iOS: <b>Streisand</b>\n"
+        "• Windows: <b>V2rayN</b>\n"
+        "• macOS: <b>V2rayU</b>"
+    )
+    await callback.message.answer(text, parse_mode="HTML", reply_markup=kb_back())
     await callback.answer()
 
 
@@ -321,6 +383,10 @@ async def cb_back_main(callback: CallbackQuery):
     await callback.answer()
 
 
+# ============================================================
+# ADMIN CALLBACKS
+# ============================================================
+
 @dp.callback_query(F.data == "admin_redirect_on")
 async def cb_admin_redirect_on(callback: CallbackQuery):
     if callback.from_user.id not in ADMIN_IDS:
@@ -353,6 +419,10 @@ async def cb_admin_stats(callback: CallbackQuery):
     await callback.message.answer(text, parse_mode="HTML", reply_markup=kb_admin())
     await callback.answer()
 
+
+# ============================================================
+# FALLBACK
+# ============================================================
 
 @dp.message()
 async def any_message(message: types.Message):
