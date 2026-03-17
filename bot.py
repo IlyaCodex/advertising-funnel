@@ -22,8 +22,8 @@ dp = Dispatcher()
 
 # Демо ключи для выдачи
 DEMO_KEYS = [
-    "vless://demo-key-1@server1.guardtunnel.com:443?encryption=none&security=tls&type=ws&host=server1.guardtunnel.com&path=/ws#GuardTunnel-DE",
-    "vless://demo-key-2@server2.guardtunnel.com:443?encryption=none&security=tls&type=ws&host=server2.guardtunnel.com&path=/ws#GuardTunnel-NL",
+    "vless://a7c01c26-1634-4b83-aacf-d54d1bec7c8a@194.124.211.206:443?security=reality&encryption=none&flow=xtls-rprx-vision&type=tcp&sni=telegram.org&pbk=OrSSDhr53zEISMa39-0gXDPvRWlDjfSlh44m7YAgGis&sid=9f1042d7#Нидерланды (Дронтен) | TCP",
+    "vless://cc313b1f-1bf9-4960-b350-09b50ac03efc@193.23.194.245:443?security=reality&encryption=none&flow=xtls-rprx-vision&type=tcp&sni=telegram.org&pbk=RMz_zUooCvY976lz-35Wh1wP7W_qR4YiWOQ-6m_QM24&sid=64b9f509#Германия | TCP",
 ]
 
 
